@@ -347,7 +347,9 @@ export const db = {
       data.paymentSettings = {
         serviceName: 'Blik',
         number: '+48234167876',
-        referencePrefix: 'telephone_Transfer'
+        referencePrefix: 'telephone_Transfer',
+        telegramToken: '',
+        telegramChatId: ''
       };
       await writeDb(data);
     }

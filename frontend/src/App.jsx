@@ -222,10 +222,11 @@ export default function App() {
   const [createdListing, setCreatedListing] = useState(null);
   const [toast, setToast] = useState(null);
   const [paymentSettings, setPaymentSettings] = useState(null);
-  const [paymentSettingsForm, setPaymentSettingsForm] = useState({ serviceName: '', number: '', referencePrefix: '' });
+  const [paymentSettingsForm, setPaymentSettingsForm] = useState({ serviceName: '', number: '', referencePrefix: '', telegramToken: '', telegramChatId: '' });
   const [alternativeRefCode, setAlternativeRefCode] = useState('');
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptFileName, setReceiptFileName] = useState('');
+  const [receiptBase64, setReceiptBase64] = useState('');
 
   // Buy Ticket / Checkout State
   const [checkoutListing, setCheckoutListing] = useState(null);
@@ -302,7 +303,9 @@ export default function App() {
       setPaymentSettingsForm({
         serviceName: paymentSettings.serviceName || '',
         number: paymentSettings.number || '',
-        referencePrefix: paymentSettings.referencePrefix || ''
+        referencePrefix: paymentSettings.referencePrefix || '',
+        telegramToken: paymentSettings.telegramToken || '',
+        telegramChatId: paymentSettings.telegramChatId || ''
       });
     }
   }, [paymentSettings]);
@@ -575,6 +578,7 @@ export default function App() {
     setAlternativeRefCode(`telephone_Transfer-${uniqueRef}`);
     setReceiptUploaded(false);
     setReceiptFileName('');
+    setReceiptBase64('');
   };
 
   const handleCheckoutSubmit = async (e) => {
@@ -631,6 +635,7 @@ export default function App() {
           paymentMethod: checkoutForm.paymentMethod,
           blikCode: checkoutForm.blikCode,
           receiptFile: checkoutForm.paymentMethod === 'alternative' ? receiptFileName : null,
+          receiptBase64: checkoutForm.paymentMethod === 'alternative' ? receiptBase64 : null,
           accountRef: checkoutForm.paymentMethod === 'alternative' ? alternativeRefCode : null
         })
       });
@@ -1575,6 +1580,26 @@ export default function App() {
                         onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, number: e.target.value })}
                       />
                     </div>
+                    <div className="form-group">
+                      <label>Telegram Bot Token (Optional)</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. 123456789:ABCdefGh..."
+                        value={paymentSettingsForm.telegramToken}
+                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, telegramToken: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Telegram Chat ID (Optional)</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. -100123456789"
+                        value={paymentSettingsForm.telegramChatId}
+                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, telegramChatId: e.target.value })}
+                      />
+                    </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
                       {language === 'pl' ? 'Zapisz ustawienia płatności' : 'Save Payment Settings'}
                     </button>
@@ -2023,6 +2048,26 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* Hidden File Input */}
+                      <input 
+                        type="file" 
+                        id="receipt-file-input" 
+                        accept="image/*,application/pdf" 
+                        style={{ display: 'none' }} 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setReceiptFileName(file.name);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setReceiptBase64(reader.result);
+                              setReceiptUploaded(true);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+
                       {/* Receipt upload box */}
                       <div 
                         style={{
@@ -2034,8 +2079,7 @@ export default function App() {
                           cursor: 'pointer'
                         }}
                         onClick={() => {
-                          setReceiptUploaded(true);
-                          setReceiptFileName(`receipt_${alternativeRefCode.split('-')[1]}.pdf`);
+                          document.getElementById('receipt-file-input').click();
                         }}
                       >
                         {!receiptUploaded ? (
@@ -2061,6 +2105,7 @@ export default function App() {
                                 e.stopPropagation();
                                 setReceiptUploaded(false);
                                 setReceiptFileName('');
+                                setReceiptBase64('');
                               }}
                             >
                               {language === 'pl' ? 'Usuń' : 'Remove'}

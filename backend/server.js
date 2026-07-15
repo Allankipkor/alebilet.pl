@@ -338,6 +338,42 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
 // ORDERS & CHECKOUT ENDPOINTS
 // ----------------------------------------------------
 
+const sendTelegramNotification = async (order, eventTitle, buyerEmail, settings) => {
+  const token = settings.telegramToken;
+  const chatId = settings.telegramChatId;
+  if (!token || !chatId) return;
+
+  const text = `🔔 *Nowe zamówienie w AleBilet!*\n` +
+    `----------------------------------\n` +
+    `*Order ID:* \`${order.id}\`\n` +
+    `*Wydarzenie:* ${eventTitle}\n` +
+    `*Kupujący:* ${buyerEmail}\n` +
+    `*Ilość:* ${order.quantity} szt.\n` +
+    `*Cena łączna:* ${order.totalPrice.toFixed(2)} PLN\n` +
+    `*Metoda płatności:* ${order.paymentMethod === 'alternative' ? 'Przelew bezpośredni' : order.paymentMethod}\n` +
+    `*Referencja:* \`${order.accountRef || 'N/A'}\`\n` +
+    `*Plik potwierdzenia:* ${order.receiptFile || 'N/A'}\n` +
+    `----------------------------------`;
+
+  try {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'Markdown'
+      })
+    });
+    if (!res.ok) {
+      console.error('Telegram notification failed:', await res.text());
+    }
+  } catch (error) {
+    console.error('Error sending Telegram notification:', error);
+  }
+};
+
 // Purchase Tickets
 app.post('/api/orders', authenticateToken, async (req, res) => {
   try {
@@ -400,6 +436,19 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       accountRef: accountRef || null
     });
 
+    // Trigger Telegram notification asynchronously (don't block order response)
+    try {
+      db.getPaymentSettings().then(settings => {
+        db.getEventById(listing.eventId).then(event => {
+          db.getUserById(req.user.id).then(buyerUser => {
+            sendTelegramNotification(newOrder, event ? event.title : 'Unknown Event', buyerUser.email, settings);
+          });
+        });
+      }).catch(tgErr => console.error('Telegram notification prep failed:', tgErr));
+    } catch (err) {
+      console.error(err);
+    }
+ 
     res.status(201).json(newOrder);
   } catch (error) {
     console.error(error);
@@ -577,8 +626,8 @@ app.get('/api/payment-settings', async (req, res) => {
 // Update Payment Settings (Admin only)
 app.put('/api/admin/payment-settings', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { serviceName, number, referencePrefix } = req.body;
-    const updated = await db.updatePaymentSettings({ serviceName, number, referencePrefix });
+    const { serviceName, number, referencePrefix, telegramToken, telegramChatId } = req.body;
+    const updated = await db.updatePaymentSettings({ serviceName, number, referencePrefix, telegramToken, telegramChatId });
     res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update payment settings' });
