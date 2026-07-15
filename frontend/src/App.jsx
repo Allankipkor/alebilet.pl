@@ -3,7 +3,7 @@ import {
   Search, PlusCircle, User, LogOut, Ticket, Lock, ShieldCheck, 
   DollarSign, Calendar, MapPin, Upload, X, ChevronRight, 
   Download, AlertTriangle, Users, ShoppingBag, TrendingUp, CheckCircle,
-  Eye, EyeOff
+  Eye, EyeOff, Link2
 } from 'lucide-react';
 
 const SECRET_KEY = 'alebilet_jwt_secret_key_12345';
@@ -218,6 +218,9 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [eventListings, setEventListings] = useState([]);
   const [currentEvent, setCurrentEvent] = useState(null);
+  const [highlightedListingId, setHighlightedListingId] = useState(null);
+  const [createdListing, setCreatedListing] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Buy Ticket / Checkout State
   const [checkoutListing, setCheckoutListing] = useState(null);
@@ -261,6 +264,46 @@ export default function App() {
       console.error("Error loading events", e);
     }
   };
+
+  const showToastMessage = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const copyShareableLink = (eventId, listingId) => {
+    const shareUrl = `${window.location.origin}/?event=${eventId}&listing=${listingId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToastMessage(language === 'pl' ? 'Link skopiowany do schowka!' : 'Link copied to clipboard!');
+    }).catch(err => {
+      console.error('Could not copy link', err);
+    });
+  };
+
+  // URL deep linking parser
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('event');
+    const listingId = params.get('listing');
+    
+    if (eventId) {
+      navigateToEvent(eventId);
+      if (listingId) {
+        setHighlightedListingId(listingId);
+      }
+    }
+  }, []);
+
+  // Scroll to highlighted listing when listings load
+  useEffect(() => {
+    if (highlightedListingId && eventListings.length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`listing-card-${highlightedListingId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
+    }
+  }, [eventListings, highlightedListingId]);
 
   // Auth bootstrap
   useEffect(() => {
@@ -617,6 +660,8 @@ export default function App() {
         body: JSON.stringify(sellForm)
       });
       if (res.ok) {
+        const createdData = await res.json();
+        setCreatedListing(createdData);
         setSellWizardStep(5); // Success confirmation stage
       } else {
         const errData = await res.json();
@@ -855,20 +900,49 @@ export default function App() {
                       <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={startSellWizard}>{t.sellButton}</button>
                     </div>
                   ) : (
-                    eventListings.map((listing) => (
-                      <div key={listing.id} className="listing-card">
-                        <div className="listing-card-details">
-                          <span className="listing-card-category">{listing.category}</span>
-                          <span className="listing-card-meta">{t.row}: {listing.row} | {t.seat}: {listing.seat}</span>
-                          <span className="listing-card-meta" style={{ color: 'var(--color-success)', fontWeight: '600' }}>✓ Zweryfikowany bilet elektroniczny (PDF)</span>
+                    eventListings.map((listing) => {
+                      const isHighlighted = listing.id === highlightedListingId;
+                      return (
+                        <div 
+                          key={listing.id} 
+                          id={`listing-card-${listing.id}`} 
+                          className="listing-card"
+                          style={isHighlighted ? {
+                            borderColor: 'var(--primary-blue)',
+                            borderWidth: '2px',
+                            backgroundColor: 'rgba(0, 174, 239, 0.03)',
+                            boxShadow: '0 0 12px rgba(0, 174, 239, 0.2)'
+                          } : {}}
+                        >
+                          <div className="listing-card-details">
+                            {isHighlighted && (
+                              <div style={{
+                                alignSelf: 'flex-start',
+                                backgroundColor: 'var(--primary-blue)',
+                                color: 'white',
+                                fontSize: '0.75rem',
+                                fontWeight: '700',
+                                padding: '0.2rem 0.5rem',
+                                borderRadius: 'var(--radius-sm)',
+                                marginBottom: '0.4rem',
+                                display: 'inline-block',
+                                width: 'fit-content'
+                              }}>
+                                {language === 'pl' ? '📌 Oferta bezpośrednia' : '📌 Shared Direct Offer'}
+                              </div>
+                            )}
+                            <span className="listing-card-category">{listing.category}</span>
+                            <span className="listing-card-meta">{t.row}: {listing.row} | {t.seat}: {listing.seat}</span>
+                            <span className="listing-card-meta" style={{ color: 'var(--color-success)', fontWeight: '600' }}>✓ Zweryfikowany bilet elektroniczny (PDF)</span>
+                          </div>
+                          <div className="listing-card-pricing">
+                            <span className="listing-card-price">{listing.pricePerTicket.toFixed(2)} zł</span>
+                            <span className="listing-card-qty">{t.quantity}: {listing.quantity}</span>
+                            <button className="btn btn-primary" onClick={() => startCheckout(listing)}>{t.buyNow}</button>
+                          </div>
                         </div>
-                        <div className="listing-card-pricing">
-                          <span className="listing-card-price">{listing.pricePerTicket.toFixed(2)} zł</span>
-                          <span className="listing-card-qty">{t.quantity}: {listing.quantity}</span>
-                          <button className="btn btn-primary" onClick={() => startCheckout(listing)}>{t.buyNow}</button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -1083,11 +1157,29 @@ export default function App() {
               {/* Step 5: Success screen */}
               {sellWizardStep === 5 && (
                 <div style={{ textAlign: 'center', padding: '1.5rem' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-full)', backgroundColor: '#d1fae5', display: 'flex', alignItems: 'center', justifycontent: 'center', margin: '0 auto 1.5rem' }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-full)', backgroundColor: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                     <CheckCircle size={36} style={{ color: 'var(--color-success)' }} />
                   </div>
                   <h3 style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>{t.listingSuccess}</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>{t.listingSuccessDesc}</p>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{t.listingSuccessDesc}</p>
+                  
+                  {createdListing && (
+                    <div style={{ backgroundColor: 'var(--bg-light)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.2rem', marginBottom: '2rem' }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.8rem' }}>
+                        {language === 'pl' ? 'Udostępnij tę ofertę bezpośrednio kupującemu:' : 'Share this listing directly with your buyer:'}
+                      </p>
+                      <button 
+                        type="button"
+                        className="btn btn-secondary" 
+                        style={{ width: '100%', border: '1.5px solid var(--primary-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                        onClick={() => copyShareableLink(createdListing.eventId, createdListing.id)}
+                      >
+                        <Link2 size={16} />
+                        {language === 'pl' ? 'Skopiuj bezpośredni link do oferty' : 'Copy direct link to listing'}
+                      </button>
+                    </div>
+                  )}
+
                   <button className="btn btn-primary" onClick={() => { setActivePage('home'); loadEvents(); }}>Powrót do strony głównej</button>
                 </div>
               )}
@@ -1266,9 +1358,23 @@ export default function App() {
                                 <td>{listing.quantity}</td>
                                 <td>{listing.pricePerTicket.toFixed(2)} zł</td>
                                 <td>
-                                  <button className="btn btn-danger" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} onClick={() => handleDeleteListing(listing.id)}>
-                                    {t.delete}
-                                  </button>
+                                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                    <button 
+                                      className="btn btn-secondary" 
+                                      style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', border: '1.5px solid var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '0.3rem' }} 
+                                      onClick={() => copyShareableLink(listing.eventId, listing.id)}
+                                    >
+                                      <Link2 size={12} />
+                                      {language === 'pl' ? 'Kopiuj link' : 'Copy link'}
+                                    </button>
+                                    <button 
+                                      className="btn btn-danger" 
+                                      style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} 
+                                      onClick={() => handleDeleteListing(listing.id)}
+                                    >
+                                      {t.delete}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -1976,6 +2082,28 @@ export default function App() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          backgroundColor: '#1e293b',
+          color: '#ffffff',
+          padding: '0.8rem 1.5rem',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          zIndex: 2000,
+          animation: 'slideUp var(--transition-normal)'
+        }}>
+          <CheckCircle size={18} style={{ color: 'var(--color-success)' }} />
+          <span>{toast}</span>
         </div>
       )}
     </div>
