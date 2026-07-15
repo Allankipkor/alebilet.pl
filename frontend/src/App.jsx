@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, PlusCircle, User, LogOut, Ticket, Lock, ShieldCheck, 
   DollarSign, Calendar, MapPin, Upload, X, ChevronRight, 
-  Download, AlertTriangle, Users, ShoppingBag, TrendingUp, CheckCircle
+  Download, AlertTriangle, Users, ShoppingBag, TrendingUp, CheckCircle,
+  Eye, EyeOff
 } from 'lucide-react';
 
 const SECRET_KEY = 'alebilet_jwt_secret_key_12345';
@@ -211,6 +212,7 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [showGooglePrompt, setShowGooglePrompt] = useState(false);
   const [googleCustomUser, setGoogleCustomUser] = useState({ name: '', email: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
   // Data State
   const [events, setEvents] = useState([]);
@@ -1574,14 +1576,36 @@ export default function App() {
               </div>
               <div className="form-group">
                 <label>{t.password}</label>
-                <input 
-                  type="password" 
-                  className="form-control" 
-                  required 
-                  placeholder="••••••••"
-                  value={authForm.password}
-                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type={showPassword ? 'text' : 'password'} 
+                    className="form-control" 
+                    style={{ paddingRight: '2.5rem' }}
+                    required 
+                    placeholder="••••••••"
+                    value={authForm.password}
+                    onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.8rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: 0
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               {showAuthModal === 'register' && (
                 <>
@@ -1644,9 +1668,9 @@ export default function App() {
 
             <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem' }}>
               {showAuthModal === 'login' ? (
-                <button className="btn-link" onClick={() => { setShowAuthModal('register'); setAuthError(''); }}>{t.dontHaveAccount}</button>
+                <button className="btn-link" onClick={() => { setShowAuthModal('register'); setAuthError(''); setShowPassword(false); }}>{t.dontHaveAccount}</button>
               ) : (
-                <button className="btn-link" onClick={() => { setShowAuthModal('login'); setAuthError(''); }}>{t.alreadyHaveAccount}</button>
+                <button className="btn-link" onClick={() => { setShowAuthModal('login'); setAuthError(''); setShowPassword(false); }}>{t.alreadyHaveAccount}</button>
               )}
             </div>
             
