@@ -1,0 +1,17 @@
+{
+  "name": "alebilet-replica",
+  "version": "1.0.0",
+  "description": "Full-stack replica of alebilet.pl with simulated authentication, BLIK payments, ticket selling, and admin portal.",
+  "main": "backend/server.js",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "dev-backend": "node backend/server.js",
+    "dev-frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently --kill-others \"npm run dev-backend\" \"npm run dev-frontend\"",
+    "build-frontend": "npm run build --prefix frontend",
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
