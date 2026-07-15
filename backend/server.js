@@ -71,8 +71,8 @@ app.post('/api/auth/register', async (req, res) => {
       email,
       passwordHash: hashedPassword,
       phone: phone || '',
-      role: role === 'admin' ? 'admin' : 'user', // allow choosing role for demo ease
-      balance: role === 'admin' ? 1000.00 : 500.00 // Seed with starting demo funds
+      role: 'user', // force standard user role
+      balance: 500.00 // standard starting balance
     });
 
     // Generate JWT

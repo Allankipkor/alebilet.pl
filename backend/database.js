@@ -34,39 +34,62 @@ async function seedInitialData() {
   const sellerHash = await bcrypt.hash('seller123', 10);
   const buyerHash = await bcrypt.hash('buyer123', 10);
 
+  const users = [
+    {
+      id: 'u-1',
+      name: 'Admin AleBilet',
+      email: 'admin@alebilet.pl',
+      passwordHash: adminHash,
+      role: 'admin',
+      balance: 1000.00,
+      phone: '+48 501 234 567',
+      bankAccount: 'PL60102030405060708090102030'
+    }
+  ];
+
+  // Dynamically seed custom admin if configured via environment variables (strict security)
+  const customAdminEmail = process.env.ADMIN_EMAIL;
+  const customAdminPassword = process.env.ADMIN_PASSWORD;
+  if (customAdminEmail && customAdminPassword) {
+    const customAdminHash = await bcrypt.hash(customAdminPassword, 10);
+    users.push({
+      id: 'u-admin-custom',
+      name: 'Admin',
+      email: customAdminEmail,
+      passwordHash: customAdminHash,
+      role: 'admin',
+      balance: 1000.00,
+      phone: '',
+      bankAccount: ''
+    });
+  }
+
+  // Add the remaining default users
+  users.push(
+    {
+      id: 'u-2',
+      name: 'Jan Kowalski',
+      email: 'seller@alebilet.pl',
+      passwordHash: sellerHash,
+      role: 'user',
+      balance: 250.00,
+      phone: '+48 602 987 654',
+      bankAccount: 'PL12102030405060708090100000'
+    },
+    {
+      id: 'u-3',
+      name: 'Anna Nowak',
+      email: 'buyer@alebilet.pl',
+      passwordHash: buyerHash,
+      role: 'user',
+      balance: 1500.00,
+      phone: '+48 703 111 222',
+      bankAccount: ''
+    }
+  );
+
   const initialDb = {
-    users: [
-      {
-        id: 'u-1',
-        name: 'Admin AleBilet',
-        email: 'admin@alebilet.pl',
-        passwordHash: adminHash,
-        role: 'admin',
-        balance: 1000.00,
-        phone: '+48 501 234 567',
-        bankAccount: 'PL60102030405060708090102030'
-      },
-      {
-        id: 'u-2',
-        name: 'Jan Kowalski',
-        email: 'seller@alebilet.pl',
-        passwordHash: sellerHash,
-        role: 'user',
-        balance: 250.00,
-        phone: '+48 602 987 654',
-        bankAccount: 'PL12102030405060708090100000'
-      },
-      {
-        id: 'u-3',
-        name: 'Anna Nowak',
-        email: 'buyer@alebilet.pl',
-        passwordHash: buyerHash,
-        role: 'user',
-        balance: 1500.00,
-        phone: '+48 703 111 222',
-        bankAccount: ''
-      }
-    ],
+    users,
     events: [
       {
         id: 'e-1',

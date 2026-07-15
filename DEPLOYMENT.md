@@ -85,6 +85,8 @@ If you prefer not to use Blueprints or want to use Render's **Free Tier** (which
 4. Add environment variables under **Environment**:
    * `NODE_ENV`: `production`
    * `JWT_SECRET`: `your-own-secure-random-string`
+   * `ADMIN_EMAIL`: `your-admin-email@example.com` (e.g. your email to seed a custom admin)
+   * `ADMIN_PASSWORD`: `your-secure-admin-password` (e.g. your admin password)
    * *If using a persistent disk:* `DB_PATH` = `/var/data/db.json`
 5. *(Optional)* If using a paid instance (Starter plan or higher) and want persistent data: scroll down to **Disks**, click **Add Disk**:
    * **Name**: `alebilet-db-data`

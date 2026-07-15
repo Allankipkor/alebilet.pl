@@ -1619,15 +1619,6 @@ export default function App() {
                       onChange={(e) => setAuthForm({ ...authForm, phone: e.target.value })}
                     />
                   </div>
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-                    <input 
-                      type="checkbox" 
-                      id="admin-check"
-                      checked={authForm.role === 'admin'}
-                      onChange={(e) => setAuthForm({ ...authForm, role: e.target.checked ? 'admin' : 'user' })}
-                    />
-                    <label htmlFor="admin-check" style={{ marginBottom: 0, cursor: 'pointer' }}>{t.registerAsAdmin}</label>
-                  </div>
                 </>
               )}
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '0.8rem' }}>
