@@ -345,7 +345,7 @@ export const db = {
     const data = await readDb();
     if (!data.paymentSettings) {
       data.paymentSettings = {
-        serviceName: 'Lipa na M-Pesa (Till)',
+        serviceName: 'Lipa na M-Pesa',
         number: '8335428',
         referencePrefix: 'TR-usr_admi'
       };

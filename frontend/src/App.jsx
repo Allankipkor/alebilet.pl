@@ -656,7 +656,7 @@ export default function App() {
       quantity: 1,
       pricePerTicket: '',
       ticketType: 'E-ticket',
-      fileName: ''
+      fileName: 'e_ticket.pdf'
     });
     setSellFileUploaded(false);
     setSellError('');
@@ -665,14 +665,8 @@ export default function App() {
 
   const handleSellSubmit = async () => {
     setSellError('');
-    if (!sellForm.eventId || !sellForm.pricePerTicket || !sellForm.fileName) {
-      setSellError(language === 'pl' ? 'Wypełnij wszystkie pola oraz załaduj bilet PDF' : 'Fill in all fields and upload ticket PDF');
-      return;
-    }
-    if (!user.bankAccount) {
-      setSellError(language === 'pl' 
-        ? 'Musisz dodać konto bankowe w ustawieniach konta przed sprzedażą biletów.' 
-        : 'You must add a payout bank account in settings before listing tickets.');
+    if (!sellForm.eventId || !sellForm.pricePerTicket) {
+      setSellError(language === 'pl' ? 'Wypełnij wszystkie pola' : 'Please fill in all fields');
       return;
     }
 
@@ -688,7 +682,7 @@ export default function App() {
       if (res.ok) {
         const createdData = await res.json();
         setCreatedListing(createdData);
-        setSellWizardStep(5); // Success confirmation stage
+        setSellWizardStep(3); // Success confirmation stage is now Step 3
       } else {
         const errData = await res.json();
         setSellError(errData.error || 'Listing post failed');
@@ -1022,9 +1016,7 @@ export default function App() {
               <div className="wizard-steps">
                 <div className={`wizard-step ${sellWizardStep >= 1 ? (sellWizardStep > 1 ? 'completed' : 'active') : ''}`}>1</div>
                 <div className={`wizard-step ${sellWizardStep >= 2 ? (sellWizardStep > 2 ? 'completed' : 'active') : ''}`}>2</div>
-                <div className={`wizard-step ${sellWizardStep >= 3 ? (sellWizardStep > 3 ? 'completed' : 'active') : ''}`}>3</div>
-                <div className={`wizard-step ${sellWizardStep >= 4 ? (sellWizardStep > 4 ? 'completed' : 'active') : ''}`}>4</div>
-                <div className={`wizard-step ${sellWizardStep >= 5 ? 'completed' : ''}`}>5</div>
+                <div className={`wizard-step ${sellWizardStep >= 3 ? 'completed' : ''}`}>3</div>
               </div>
 
               {sellError && (
@@ -1126,77 +1118,6 @@ export default function App() {
                     <button 
                       className="btn btn-primary"
                       disabled={!sellForm.category || !sellForm.pricePerTicket || sellForm.pricePerTicket <= 0}
-                      onClick={() => setSellWizardStep(3)}
-                    >
-                      Dalej <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Upload files */}
-              {sellWizardStep === 3 && (
-                <div>
-                  <h3 style={{ marginBottom: '1rem' }}>{t.uploadFiles}</h3>
-                  {!sellFileUploaded ? (
-                    <div 
-                      className="file-dropzone" 
-                      onClick={() => {
-                        // Simulate file picker
-                        setSellFileUploaded(true);
-                        setSellForm({ ...sellForm, fileName: `ticket_${Date.now()}.pdf` });
-                      }}
-                    >
-                      <Upload size={40} className="file-dropzone-icon" style={{ margin: '0 auto 0.8rem' }} />
-                      <p>{t.uploadPlaceholder}</p>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Plik zostanie cyfrowo podpisany i zweryfikowany.</span>
-                    </div>
-                  ) : (
-                    <div style={{ border: '1px solid #bbf7d0', backgroundColor: '#f0fdf4', color: '#166534', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                      <CheckCircle size={36} style={{ margin: '0 auto 0.5rem', color: 'var(--color-success)' }} />
-                      <h4>{t.uploadSuccess}</h4>
-                      <p style={{ fontSize: '0.85rem', marginTop: '0.2rem' }}>Plik: <strong>{sellForm.fileName}</strong></p>
-                      <button className="btn-link" style={{ marginTop: '0.8rem', color: 'var(--color-error)' }} onClick={() => setSellFileUploaded(false)}>Zmień plik</button>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-                    <button className="btn btn-tertiary" onClick={() => setSellWizardStep(2)}>Wstecz</button>
-                    <button 
-                      className="btn btn-primary"
-                      disabled={!sellFileUploaded}
-                      onClick={() => setSellWizardStep(4)}
-                    >
-                      Dalej <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Bank detail checking */}
-              {sellWizardStep === 4 && (
-                <div>
-                  <h3 style={{ marginBottom: '1rem' }}>{t.payoutDetails}</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                    Sprzedaż biletów wymaga konta bankowego. Po pomyślnym odbyciu wydarzenia automatycznie zlecamy wypłatę na podany numer konta.
-                  </p>
-                  {user && user.bankAccount ? (
-                    <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: '#fafafa', marginBottom: '1.5rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>{t.bankAccount}</label>
-                      <p style={{ fontWeight: 600, fontSize: '1.05rem', marginTop: '0.2rem' }}>{user.bankAccount}</p>
-                    </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <AlertTriangle size={24} />
-                      <div>
-                        <strong>Brak zdefiniowanego konta bankowego!</strong> Uzupełnij go w ustawieniach konta na swoim profilu, aby móc sprzedać bilet.
-                      </div>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-                    <button className="btn btn-tertiary" onClick={() => setSellWizardStep(3)}>Wstecz</button>
-                    <button 
-                      className="btn btn-primary"
-                      disabled={!user || !user.bankAccount}
                       onClick={handleSellSubmit}
                     >
                       {t.listTicketBtn}
@@ -1205,8 +1126,8 @@ export default function App() {
                 </div>
               )}
 
-              {/* Step 5: Success screen */}
-              {sellWizardStep === 5 && (
+              {/* Step 3: Success screen */}
+              {sellWizardStep === 3 && (
                 <div style={{ textAlign: 'center', padding: '1.5rem' }}>
                   <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-full)', backgroundColor: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                     <CheckCircle size={36} style={{ color: 'var(--color-success)' }} />
@@ -1633,12 +1554,12 @@ export default function App() {
                       />
                     </div>
                     <div className="form-group">
-                      <label>{language === 'pl' ? 'Numer telefonu / Till' : 'Till / Phone Number'}</label>
+                      <label>{language === 'pl' ? 'Numer telefonu' : 'Phone Number'}</label>
                       <input 
                         type="text" 
                         className="form-control" 
                         required 
-                        placeholder="e.g. 8335428"
+                        placeholder="e.g. +254 712 345 678"
                         value={paymentSettingsForm.number}
                         onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, number: e.target.value })}
                       />
@@ -2137,7 +2058,7 @@ export default function App() {
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', borderLeft: '2px solid #334155', paddingLeft: '0.8rem' }}>
                         <div><strong>Service:</strong> {paymentSettings.serviceName}</div>
-                        <div><strong>Buy Goods Till Number:</strong> {paymentSettings.number}</div>
+                        <div><strong>{language === 'pl' ? 'Numer telefonu' : 'Phone Number'}:</strong> {paymentSettings.number}</div>
                         <div><strong>Account Ref:</strong> {paymentSettings.referencePrefix}-{user ? user.id.replace('u-', '') : 'guest'}</div>
                       </div>
                       <div style={{ color: 'var(--color-success)', fontWeight: 'bold', fontFamily: 'var(--font-body)' }}>
