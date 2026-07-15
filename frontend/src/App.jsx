@@ -1674,12 +1674,14 @@ export default function App() {
               )}
             </div>
             
-            <div style={{ marginTop: '1rem', padding: '0.8rem', backgroundColor: '#f8f9fa', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              <strong>Konta demonstracyjne:</strong><br />
-              • Admin: <code>admin@alebilet.pl</code> / <code>admin123</code><br />
-              • Seller: <code>seller@alebilet.pl</code> / <code>seller123</code><br />
-              • Buyer: <code>buyer@alebilet.pl</code> / <code>buyer123</code>
-            </div>
+            {!import.meta.env.PROD && (
+              <div style={{ marginTop: '1rem', padding: '0.8rem', backgroundColor: '#f8f9fa', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>Konta demonstracyjne:</strong><br />
+                • Admin: <code>admin@alebilet.pl</code> / <code>admin123</code><br />
+                • Seller: <code>seller@alebilet.pl</code> / <code>seller123</code><br />
+                • Buyer: <code>buyer@alebilet.pl</code> / <code>buyer123</code>
+              </div>
+            )}
           </div>
         </div>
       )}
