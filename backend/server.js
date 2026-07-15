@@ -341,7 +341,7 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
 // Purchase Tickets
 app.post('/api/orders', authenticateToken, async (req, res) => {
   try {
-    const { listingId, quantity, deliveryEmail, deliveryPhone, deliveryAddress, paymentMethod, blikCode } = req.body;
+    const { listingId, quantity, deliveryEmail, deliveryPhone, deliveryAddress, paymentMethod, blikCode, receiptFile, accountRef } = req.body;
 
     if (!listingId || !quantity || !deliveryEmail || !deliveryPhone || !paymentMethod) {
       return res.status(400).json({ error: 'Missing checkout information' });
@@ -362,9 +362,9 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'You cannot buy your own ticket' });
     }
 
-    // Calculate pricing (AleBilet collects a 15% buyer service fee)
+    // Calculate pricing (AleBilet collects a 3% buyer service fee)
     const basePrice = listing.pricePerTicket * quantity;
-    const buyerFee = basePrice * 0.15;
+    const buyerFee = basePrice * 0.03;
     const totalPrice = parseFloat((basePrice + buyerFee).toFixed(2));
 
     // Verify buyer balance (only if not alternative payment method)
@@ -395,7 +395,9 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         address: deliveryAddress || ''
       },
       paymentMethod,
-      fileName: listing.fileName
+      fileName: listing.fileName,
+      receiptFile: receiptFile || null,
+      accountRef: accountRef || null
     });
 
     res.status(201).json(newOrder);

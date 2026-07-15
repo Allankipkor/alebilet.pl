@@ -66,7 +66,7 @@ const translations = {
     addFundsTitle: "Zasilenie salda demo",
     amountPLN: "Kwota (PLN)",
     checkoutTitle: "Podsumowanie zamówienia",
-    serviceFee: "Opłata serwisowa (15%)",
+    serviceFee: "Opłata serwisowa (3%)",
     totalPrice: "Razem do zapłaty",
     deliveryInfo: "Dane dostawy i kontaktu",
     paymentMethod: "Metoda płatności",
@@ -157,7 +157,7 @@ const translations = {
     addFundsTitle: "Demo Balance Deposit",
     amountPLN: "Amount (PLN)",
     checkoutTitle: "Order summary",
-    serviceFee: "Service Fee (15%)",
+    serviceFee: "Service Fee (3%)",
     totalPrice: "Total to pay",
     deliveryInfo: "Delivery & contact details",
     paymentMethod: "Payment method",
@@ -223,6 +223,9 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [paymentSettings, setPaymentSettings] = useState(null);
   const [paymentSettingsForm, setPaymentSettingsForm] = useState({ serviceName: '', number: '', referencePrefix: '' });
+  const [alternativeRefCode, setAlternativeRefCode] = useState('');
+  const [receiptUploaded, setReceiptUploaded] = useState(false);
+  const [receiptFileName, setReceiptFileName] = useState('');
 
   // Buy Ticket / Checkout State
   const [checkoutListing, setCheckoutListing] = useState(null);
@@ -566,6 +569,12 @@ export default function App() {
     setCheckoutStep('form');
     setCheckoutError('');
     setBlikProgress(0);
+
+    // Generate unique reference starting with telephone_Transfer
+    const uniqueRef = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setAlternativeRefCode(`telephone_Transfer-${uniqueRef}`);
+    setReceiptUploaded(false);
+    setReceiptFileName('');
   };
 
   const handleCheckoutSubmit = async (e) => {
@@ -574,7 +583,7 @@ export default function App() {
 
     // Pricing calculation
     const basePrice = checkoutListing.pricePerTicket * checkoutForm.quantity;
-    const fee = basePrice * 0.15;
+    const fee = basePrice * 0.03;
     const total = parseFloat((basePrice + fee).toFixed(2));
 
     if (checkoutForm.paymentMethod !== 'alternative' && user.balance < total) {
@@ -620,7 +629,9 @@ export default function App() {
           deliveryPhone: checkoutForm.phone,
           deliveryAddress: checkoutForm.address,
           paymentMethod: checkoutForm.paymentMethod,
-          blikCode: checkoutForm.blikCode
+          blikCode: checkoutForm.blikCode,
+          receiptFile: checkoutForm.paymentMethod === 'alternative' ? receiptFileName : null,
+          accountRef: checkoutForm.paymentMethod === 'alternative' ? alternativeRefCode : null
         })
       });
       const data = await res.json();
@@ -1538,41 +1549,30 @@ export default function App() {
                   <h3>{language === 'pl' ? 'Konfiguracja płatności alternatywnych' : 'Alternative Payment Settings'}</h3>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.2rem' }}>
                     {language === 'pl' 
-                      ? 'Dane te będą widoczne dla kupujących jako opcja przelewu bezpośredniego (np. M-Pesa).' 
-                      : 'These details will be displayed to buyers as a direct transfer payment option (e.g. M-Pesa).'}
+                      ? 'Dane te będą widoczne dla kupujących jako opcja przelewu bezpośredniego (np. BLIK).' 
+                      : 'These details will be displayed to buyers as a direct transfer payment option (e.g. BLIK).'}
                   </p>
                   <form onSubmit={handleSavePaymentSettings}>
                     <div className="form-group">
-                      <label>{language === 'pl' ? 'Nazwa usługi' : 'Service Name'}</label>
+                      <label>{language === 'pl' ? 'Nazwa (np. Blik / Odbiorca)' : 'Name (e.g. Blik / Recipient)'}</label>
                       <input 
                         type="text" 
                         className="form-control" 
                         required 
-                        placeholder="e.g. Lipa na M-Pesa (Till)"
+                        placeholder="e.g. Blik"
                         value={paymentSettingsForm.serviceName}
                         onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, serviceName: e.target.value })}
                       />
                     </div>
                     <div className="form-group">
-                      <label>{language === 'pl' ? 'Numer telefonu' : 'Phone Number'}</label>
+                      <label>{language === 'pl' ? 'Numer Blik (Telefon)' : 'Blik (Phone Number)'}</label>
                       <input 
                         type="text" 
                         className="form-control" 
                         required 
-                        placeholder="e.g. +254 712 345 678"
+                        placeholder="e.g. +48 123 456 789"
                         value={paymentSettingsForm.number}
                         onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, number: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>{language === 'pl' ? 'Prefiks referencji' : 'Reference Prefix'}</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        required 
-                        placeholder="e.g. TR-usr_admi"
-                        value={paymentSettingsForm.referencePrefix}
-                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, referencePrefix: e.target.value })}
                       />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
@@ -1927,11 +1927,11 @@ export default function App() {
                   </div>
                   <div className="checkout-price-row">
                     <span>{t.serviceFee}</span>
-                    <span>{(checkoutListing.pricePerTicket * checkoutForm.quantity * 0.15).toFixed(2)} zł</span>
+                    <span>{(checkoutListing.pricePerTicket * checkoutForm.quantity * 0.03).toFixed(2)} zł</span>
                   </div>
                   <div className="checkout-price-row total">
                     <span>{t.totalPrice}</span>
-                    <span>{(checkoutListing.pricePerTicket * checkoutForm.quantity * 1.15).toFixed(2)} zł</span>
+                    <span>{(checkoutListing.pricePerTicket * checkoutForm.quantity * 1.03).toFixed(2)} zł</span>
                   </div>
                 </div>
 
@@ -2037,32 +2037,79 @@ export default function App() {
                   )}
 
                   {checkoutForm.paymentMethod === 'alternative' && paymentSettings && (
-                    <div style={{
-                      backgroundColor: '#0f172a',
-                      color: '#e2e8f0',
-                      padding: '1.2rem',
-                      borderRadius: 'var(--radius-md)',
-                      borderLeft: '4px solid var(--primary-blue)',
-                      marginBottom: '1.2rem',
-                      fontSize: '0.85rem',
-                      fontFamily: 'monospace',
-                      textAlign: 'left'
-                    }}>
-                      <strong style={{ color: '#ffffff', display: 'block', marginBottom: '0.6rem', fontSize: '0.9rem', fontFamily: 'var(--font-heading)' }}>
-                        {language === 'pl' ? 'Instrukcja Płatności' : 'Payment Instructions'}
-                      </strong>
-                      <p style={{ marginBottom: '0.8rem', color: '#94a3b8', fontFamily: 'var(--font-body)' }}>
-                        {language === 'pl' 
-                          ? '1. Dokonaj bezpośredniego przelewu na poniższe dane:' 
-                          : '1. Make direct transfer to the merchant details below:'}
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', borderLeft: '2px solid #334155', paddingLeft: '0.8rem' }}>
-                        <div><strong>Service:</strong> {paymentSettings.serviceName}</div>
-                        <div><strong>{language === 'pl' ? 'Numer telefonu' : 'Phone Number'}:</strong> {paymentSettings.number}</div>
-                        <div><strong>Account Ref:</strong> {paymentSettings.referencePrefix}-{user ? user.id.replace('u-', '') : 'guest'}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.2rem' }}>
+                      <div style={{
+                        backgroundColor: '#0f172a',
+                        color: '#e2e8f0',
+                        padding: '1.2rem',
+                        borderRadius: 'var(--radius-md)',
+                        borderLeft: '4px solid var(--primary-blue)',
+                        fontSize: '0.85rem',
+                        fontFamily: 'monospace',
+                        textAlign: 'left'
+                      }}>
+                        <strong style={{ color: '#ffffff', display: 'block', marginBottom: '0.6rem', fontSize: '0.9rem', fontFamily: 'var(--font-heading)' }}>
+                          {language === 'pl' ? 'Instrukcja Płatności' : 'Payment Instructions'}
+                        </strong>
+                        <p style={{ marginBottom: '0.8rem', color: '#94a3b8', fontFamily: 'var(--font-body)' }}>
+                          {language === 'pl' 
+                            ? '1. Dokonaj bezpośredniego przelewu na poniższe dane:' 
+                            : '1. Make direct transfer to the merchant details below:'}
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', borderLeft: '2px solid #334155', paddingLeft: '0.8rem' }}>
+                          <div><strong>Name:</strong> {paymentSettings.serviceName}</div>
+                          <div><strong>Blik:</strong> {paymentSettings.number}</div>
+                          <div><strong>Account Ref:</strong> {alternativeRefCode}</div>
+                        </div>
+                        <div style={{ color: 'var(--color-success)', fontWeight: 'bold', fontFamily: 'var(--font-body)' }}>
+                          💰 {language === 'pl' ? 'Kwota do zapłaty:' : 'Amount due:'} {(checkoutListing.pricePerTicket * checkoutForm.quantity * 1.03).toFixed(2)} zł
+                        </div>
                       </div>
-                      <div style={{ color: 'var(--color-success)', fontWeight: 'bold', fontFamily: 'var(--font-body)' }}>
-                        💰 {language === 'pl' ? 'Kwota do zapłaty:' : 'Amount due:'} {(checkoutListing.pricePerTicket * checkoutForm.quantity * 1.15).toFixed(2)} zł
+
+                      {/* Receipt upload box */}
+                      <div 
+                        style={{
+                          border: '2px dashed var(--border-color)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '1.2rem',
+                          textAlign: 'center',
+                          backgroundColor: 'var(--bg-light)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          setReceiptUploaded(true);
+                          setReceiptFileName(`receipt_${alternativeRefCode.split('-')[1]}.pdf`);
+                        }}
+                      >
+                        {!receiptUploaded ? (
+                          <div>
+                            <span style={{ display: 'block', fontSize: '1.8rem', marginBottom: '0.4rem' }}>📄</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--dark-blue-text)' }}>
+                              {language === 'pl' ? 'Wyślij potwierdzenie przelewu' : 'Upload payment receipt'}
+                            </span>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                              {language === 'pl' ? 'Kliknij, aby załączyć plik PDF lub zdjęcie' : 'Click to attach PDF or image receipt'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--color-success)' }}>
+                            <CheckCircle size={18} style={{ color: 'var(--color-success)' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                              {language === 'pl' ? 'Załączono:' : 'Attached:'} {receiptFileName}
+                            </span>
+                            <button 
+                              type="button" 
+                              style={{ border: 'none', background: 'none', color: 'var(--color-error)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline', marginLeft: '0.5rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReceiptUploaded(false);
+                                setReceiptFileName('');
+                              }}
+                            >
+                              {language === 'pl' ? 'Usuń' : 'Remove'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -2070,7 +2117,16 @@ export default function App() {
 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <button type="button" className="btn btn-tertiary" style={{ flex: 1 }} onClick={() => setCheckoutListing(null)}>Anuluj</button>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>{t.payAndOrder}</button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    style={{ flex: 2 }}
+                    disabled={checkoutForm.paymentMethod === 'alternative' && !receiptUploaded}
+                  >
+                    {checkoutForm.paymentMethod === 'alternative' 
+                      ? (language === 'pl' ? 'Potwierdź wpłatę i zamów' : 'Mark as Paid & Confirm')
+                      : t.payAndOrder}
+                  </button>
                 </div>
               </form>
             )}

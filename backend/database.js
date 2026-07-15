@@ -345,9 +345,9 @@ export const db = {
     const data = await readDb();
     if (!data.paymentSettings) {
       data.paymentSettings = {
-        serviceName: 'Lipa na M-Pesa',
-        number: '8335428',
-        referencePrefix: 'TR-usr_admi'
+        serviceName: 'Blik',
+        number: '+48234167876',
+        referencePrefix: 'telephone_Transfer'
       };
       await writeDb(data);
     }
