@@ -1040,3 +1040,250 @@ button, input, select, textarea {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Common Grid & Container */
+  .container {
+    padding: 0 1rem;
+  }
+
+  .event-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.2rem;
+  }
+
+  /* Responsive Navbar */
+  .navbar {
+    padding: 0.8rem 0;
+    position: relative;
+  }
+
+  .navbar .container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .logo-container {
+    justify-content: center;
+  }
+
+  .search-bar-wrapper {
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .nav-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .nav-actions > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  .nav-actions .btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  /* Hero Section */
+  .hero-section {
+    padding: 3rem 0;
+  }
+
+  .hero-title {
+    font-size: 1.8rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-search-wrapper {
+    border-radius: var(--radius-md);
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .hero-search-input {
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-light-gray);
+  }
+
+  .hero-search-btn {
+    border-radius: var(--radius-md);
+    padding: 0.6rem;
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  /* Category tabs */
+  .categories-container {
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .category-tab {
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* Event Details Hero */
+  .event-hero {
+    padding: 2rem 0;
+  }
+
+  .event-hero-layout {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .event-hero-img {
+    width: 100%;
+    max-width: 320px;
+    height: 180px;
+  }
+
+  .event-hero-title {
+    font-size: 1.6rem;
+  }
+
+  .event-hero-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  /* Listings Section */
+  .listings-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .event-info-panel {
+    align-self: stretch;
+  }
+
+  /* User Dashboard Layout */
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .dashboard-sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .dashboard-tab-btn {
+    white-space: nowrap;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .dashboard-header-block {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .dashboard-header-block .btn {
+    width: 100%;
+  }
+
+  /* Sell Ticket Wizard */
+  .sell-wizard-card {
+    padding: 1.5rem;
+    margin: 1rem auto;
+  }
+
+  .wizard-steps {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Listing Card */
+  .listing-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .listing-card-pricing {
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.8rem;
+    width: 100%;
+  }
+
+  .listing-card-price {
+    font-size: 1.2rem;
+  }
+
+  .listing-card-pricing .btn {
+    width: 100%;
+  }
+
+  /* Profile Balance Box */
+  .profile-balance-box {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .profile-balance-value {
+    font-size: 1.8rem;
+  }
+
+  .profile-balance-box .btn {
+    width: 100%;
+  }
+
+  /* Modal Dialogs */
+  .modal-content {
+    padding: 1.2rem;
+    width: 95%;
+  }
+
+  .modal-title {
+    font-size: 1.3rem;
+  }
+
+  .payment-methods-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .blik-code-field {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+}
+
