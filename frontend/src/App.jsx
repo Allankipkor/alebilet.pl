@@ -221,6 +221,8 @@ export default function App() {
   const [highlightedListingId, setHighlightedListingId] = useState(null);
   const [createdListing, setCreatedListing] = useState(null);
   const [toast, setToast] = useState(null);
+  const [paymentSettings, setPaymentSettings] = useState(null);
+  const [paymentSettingsForm, setPaymentSettingsForm] = useState({ serviceName: '', number: '', referencePrefix: '' });
 
   // Buy Ticket / Checkout State
   const [checkoutListing, setCheckoutListing] = useState(null);
@@ -279,8 +281,32 @@ export default function App() {
     });
   };
 
-  // URL deep linking parser
+  const loadPaymentSettings = async () => {
+    try {
+      const res = await fetch('/api/payment-settings');
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentSettings(data);
+      }
+    } catch (e) {
+      console.error("Error loading payment settings", e);
+    }
+  };
+
+  // Sync form state when loading data
   useEffect(() => {
+    if (paymentSettings) {
+      setPaymentSettingsForm({
+        serviceName: paymentSettings.serviceName || '',
+        number: paymentSettings.number || '',
+        referencePrefix: paymentSettings.referencePrefix || ''
+      });
+    }
+  }, [paymentSettings]);
+
+  // URL deep linking parser and payment settings boot
+  useEffect(() => {
+    loadPaymentSettings();
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get('event');
     const listingId = params.get('listing');
@@ -551,7 +577,7 @@ export default function App() {
     const fee = basePrice * 0.15;
     const total = parseFloat((basePrice + fee).toFixed(2));
 
-    if (user.balance < total) {
+    if (checkoutForm.paymentMethod !== 'alternative' && user.balance < total) {
       setCheckoutError(language === 'pl' 
         ? 'Niewystarczające środki. Zasil swoje saldo w panelu użytkownika przed zakupem.' 
         : 'Insufficient funds. Please top up your balance in your dashboard before purchase.');
@@ -698,6 +724,31 @@ export default function App() {
       }
     } catch (e) {
       setAdminError('Network error');
+    }
+  };
+
+  const handleSavePaymentSettings = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/payment-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(paymentSettingsForm)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentSettings(data);
+        showToastMessage(language === 'pl' ? 'Zapisano ustawienia płatności!' : 'Payment settings saved successfully!');
+      } else {
+        const err = await res.json();
+        showToastMessage(err.error || 'Failed to save settings');
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMessage('Network error');
     }
   };
 
@@ -1467,98 +1518,148 @@ export default function App() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
-              {/* Event Creation Form */}
-              <div className="dashboard-card">
-                <h3>{t.postEventTitle}</h3>
-                {adminError && (
-                  <div style={{ color: 'var(--color-error)', backgroundColor: '#fee2e2', padding: '0.8rem', borderRadius: 'var(--radius-md)', margin: '1rem 0' }}>
-                    {adminError}
-                  </div>
-                )}
-                <form onSubmit={handleCreateEvent} style={{ marginTop: '1rem' }}>
-                  <div className="form-group">
-                    <label>{t.eventTitle}</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      required
-                      placeholder="np. Taylor Swift - Eras Tour"
-                      value={eventForm.title}
-                      onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                    />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="form-group">
-                      <label>Kategoria</label>
-                      <select 
-                        className="form-control"
-                        value={eventForm.category}
-                        onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
-                      >
-                        <option value="Concerts">Koncerty</option>
-                        <option value="Sports">Sport</option>
-                        <option value="Festivals">Festiwale</option>
-                        <option value="Theater">Teatr</option>
-                      </select>
+              <div> {/* Left Column Wrapper */}
+                {/* Event Creation Form */}
+                <div className="dashboard-card">
+                  <h3>{t.postEventTitle}</h3>
+                  {adminError && (
+                    <div style={{ color: 'var(--color-error)', backgroundColor: '#fee2e2', padding: '0.8rem', borderRadius: 'var(--radius-md)', margin: '1rem 0' }}>
+                      {adminError}
                     </div>
+                  )}
+                  <form onSubmit={handleCreateEvent} style={{ marginTop: '1rem' }}>
                     <div className="form-group">
-                      <label>{t.date}</label>
+                      <label>{t.eventTitle}</label>
                       <input 
-                        type="datetime-local" 
-                        className="form-control"
+                        type="text" 
+                        className="form-control" 
                         required
-                        value={eventForm.date}
-                        onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                        placeholder="np. Taylor Swift - Eras Tour"
+                        value={eventForm.title}
+                        onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
                       />
                     </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div className="form-group">
+                        <label>Kategoria</label>
+                        <select 
+                          className="form-control"
+                          value={eventForm.category}
+                          onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
+                        >
+                          <option value="Concerts">Koncerty</option>
+                          <option value="Sports">Sport</option>
+                          <option value="Festivals">Festiwale</option>
+                          <option value="Theater">Teatr</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>{t.date}</label>
+                        <input 
+                          type="datetime-local" 
+                          className="form-control"
+                          required
+                          value={eventForm.date}
+                          onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div className="form-group">
+                        <label>{t.venueName}</label>
+                        <input 
+                          type="text" 
+                          className="form-control"
+                          required
+                          placeholder="np. PGE Narodowy"
+                          value={eventForm.venue}
+                          onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>{t.city}</label>
+                        <input 
+                          type="text" 
+                          className="form-control"
+                          required
+                          placeholder="np. Warsaw"
+                          value={eventForm.city}
+                          onChange={(e) => setEventForm({ ...eventForm, city: e.target.value })}
+                        />
+                      </div>
+                    </div>
                     <div className="form-group">
-                      <label>{t.venueName}</label>
+                      <label>{t.description}</label>
+                      <textarea 
+                        rows="3" 
+                        className="form-control"
+                        placeholder="Szczegóły trasy, regulaminu, itp."
+                        value={eventForm.description}
+                        onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t.imageLink}</label>
                       <input 
                         type="text" 
                         className="form-control"
-                        required
-                        placeholder="np. PGE Narodowy"
-                        value={eventForm.venue}
-                        onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })}
+                        placeholder="Link URL do grafiki (pozostaw puste dla domyślnego)"
+                        value={eventForm.imageUrl}
+                        onChange={(e) => setEventForm({ ...eventForm, imageUrl: e.target.value })}
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{t.postEventBtn}</button>
+                  </form>
+                </div>
+
+                {/* Alternative Payment Settings */}
+                <div className="dashboard-card" style={{ marginTop: '1.5rem' }}>
+                  <h3>{language === 'pl' ? 'Konfiguracja płatności alternatywnych' : 'Alternative Payment Settings'}</h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.2rem' }}>
+                    {language === 'pl' 
+                      ? 'Dane te będą widoczne dla kupujących jako opcja przelewu bezpośredniego (np. M-Pesa).' 
+                      : 'These details will be displayed to buyers as a direct transfer payment option (e.g. M-Pesa).'}
+                  </p>
+                  <form onSubmit={handleSavePaymentSettings}>
+                    <div className="form-group">
+                      <label>{language === 'pl' ? 'Nazwa usługi' : 'Service Name'}</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        required 
+                        placeholder="e.g. Lipa na M-Pesa (Till)"
+                        value={paymentSettingsForm.serviceName}
+                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, serviceName: e.target.value })}
                       />
                     </div>
                     <div className="form-group">
-                      <label>{t.city}</label>
+                      <label>{language === 'pl' ? 'Numer telefonu / Till' : 'Till / Phone Number'}</label>
                       <input 
                         type="text" 
-                        className="form-control"
-                        required
-                        placeholder="np. Warsaw"
-                        value={eventForm.city}
-                        onChange={(e) => setEventForm({ ...eventForm, city: e.target.value })}
+                        className="form-control" 
+                        required 
+                        placeholder="e.g. 8335428"
+                        value={paymentSettingsForm.number}
+                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, number: e.target.value })}
                       />
                     </div>
-                  </div>
-                  <div className="form-group">
-                    <label>{t.description}</label>
-                    <textarea 
-                      rows="3" 
-                      className="form-control"
-                      placeholder="Szczegóły trasy, regulaminu, itp."
-                      value={eventForm.description}
-                      onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t.imageLink}</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="Link URL do grafiki (pozostaw puste dla domyślnego)"
-                      value={eventForm.imageUrl}
-                      onChange={(e) => setEventForm({ ...eventForm, imageUrl: e.target.value })}
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{t.postEventBtn}</button>
-                </form>
-              </div>
+                    <div className="form-group">
+                      <label>{language === 'pl' ? 'Prefiks referencji' : 'Reference Prefix'}</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        required 
+                        placeholder="e.g. TR-usr_admi"
+                        value={paymentSettingsForm.referencePrefix}
+                        onChange={(e) => setPaymentSettingsForm({ ...paymentSettingsForm, referencePrefix: e.target.value })}
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
+                      {language === 'pl' ? 'Zapisz ustawienia płatności' : 'Save Payment Settings'}
+                    </button>
+                  </form>
+                </div>
+              </div> {/* Left Column Wrapper Close */}
 
               {/* Manage Listings Table */}
               <div className="dashboard-card" style={{ alignSelf: 'start' }}>
@@ -1954,7 +2055,7 @@ export default function App() {
                 {/* Payment selection */}
                 <div>
                   <h4 style={{ marginBottom: '0.8rem', color: 'var(--dark-blue-text)' }}>{t.paymentMethod}</h4>
-                  <div className="payment-methods-grid">
+                  <div className="payment-methods-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
                     <div 
                       className={`payment-method-card ${checkoutForm.paymentMethod === 'blik' ? 'active' : ''}`}
                       onClick={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'blik' })}
@@ -1968,6 +2069,13 @@ export default function App() {
                     >
                       <span style={{ display: 'block', fontSize: '1.1rem' }}>💳</span>
                       Karta płatnicza
+                    </div>
+                    <div 
+                      className={`payment-method-card ${checkoutForm.paymentMethod === 'alternative' ? 'active' : ''}`}
+                      onClick={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'alternative' })}
+                    >
+                      <span style={{ display: 'block', fontSize: '1.1rem' }}>💸</span>
+                      {language === 'pl' ? 'Przelew bezpośredni' : 'Direct Transfer'}
                     </div>
                   </div>
 
@@ -2003,6 +2111,37 @@ export default function App() {
                           <label>CVC</label>
                           <input type="password" className="form-control" placeholder="CVV" disabled value="123" />
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {checkoutForm.paymentMethod === 'alternative' && paymentSettings && (
+                    <div style={{
+                      backgroundColor: '#0f172a',
+                      color: '#e2e8f0',
+                      padding: '1.2rem',
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid var(--primary-blue)',
+                      marginBottom: '1.2rem',
+                      fontSize: '0.85rem',
+                      fontFamily: 'monospace',
+                      textAlign: 'left'
+                    }}>
+                      <strong style={{ color: '#ffffff', display: 'block', marginBottom: '0.6rem', fontSize: '0.9rem', fontFamily: 'var(--font-heading)' }}>
+                        {language === 'pl' ? 'Instrukcja Płatności' : 'Payment Instructions'}
+                      </strong>
+                      <p style={{ marginBottom: '0.8rem', color: '#94a3b8', fontFamily: 'var(--font-body)' }}>
+                        {language === 'pl' 
+                          ? '1. Dokonaj bezpośredniego przelewu na poniższe dane:' 
+                          : '1. Make direct transfer to the merchant details below:'}
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', borderLeft: '2px solid #334155', paddingLeft: '0.8rem' }}>
+                        <div><strong>Service:</strong> {paymentSettings.serviceName}</div>
+                        <div><strong>Buy Goods Till Number:</strong> {paymentSettings.number}</div>
+                        <div><strong>Account Ref:</strong> {paymentSettings.referencePrefix}-{user ? user.id.replace('u-', '') : 'guest'}</div>
+                      </div>
+                      <div style={{ color: 'var(--color-success)', fontWeight: 'bold', fontFamily: 'var(--font-body)' }}>
+                        💰 {language === 'pl' ? 'Kwota do zapłaty:' : 'Amount due:'} {(checkoutListing.pricePerTicket * checkoutForm.quantity * 1.15).toFixed(2)} zł
                       </div>
                     </div>
                   )}

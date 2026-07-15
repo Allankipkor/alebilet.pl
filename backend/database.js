@@ -327,7 +327,7 @@ export const db = {
     const buyerIndex = data.users.findIndex(u => u.id === order.buyerId);
     const sellerIndex = data.users.findIndex(u => u.id === order.sellerId);
 
-    if (buyerIndex !== -1) {
+    if (buyerIndex !== -1 && order.paymentMethod !== 'alternative') {
       data.users[buyerIndex].balance -= order.totalPrice;
     }
     if (sellerIndex !== -1) {
@@ -339,5 +339,28 @@ export const db = {
 
     await writeDb(data);
     return newOrder;
+  },
+
+  async getPaymentSettings() {
+    const data = await readDb();
+    if (!data.paymentSettings) {
+      data.paymentSettings = {
+        serviceName: 'Lipa na M-Pesa (Till)',
+        number: '8335428',
+        referencePrefix: 'TR-usr_admi'
+      };
+      await writeDb(data);
+    }
+    return data.paymentSettings;
+  },
+
+  async updatePaymentSettings(updates) {
+    const data = await readDb();
+    data.paymentSettings = {
+      ...data.paymentSettings,
+      ...updates
+    };
+    await writeDb(data);
+    return data.paymentSettings;
   }
 };

@@ -367,10 +367,12 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
     const buyerFee = basePrice * 0.15;
     const totalPrice = parseFloat((basePrice + buyerFee).toFixed(2));
 
-    // Verify buyer balance
-    const buyer = await db.getUserById(req.user.id);
-    if (buyer.balance < totalPrice) {
-      return res.status(400).json({ error: 'Insufficient funds. Please top up your balance.' });
+    // Verify buyer balance (only if not alternative payment method)
+    if (paymentMethod !== 'alternative') {
+      const buyer = await db.getUserById(req.user.id);
+      if (buyer.balance < totalPrice) {
+        return res.status(400).json({ error: 'Insufficient funds. Please top up your balance.' });
+      }
     }
 
     // Mock BLIK check
@@ -557,6 +559,27 @@ app.get('/api/admin/listings', authenticateToken, requireAdmin, async (req, res)
     res.status(200).json(hydratedListings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve listings for management' });
+  }
+});
+
+// Get Payment Settings (Public - for checkout page)
+app.get('/api/payment-settings', async (req, res) => {
+  try {
+    const settings = await db.getPaymentSettings();
+    res.status(200).json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve payment settings' });
+  }
+});
+
+// Update Payment Settings (Admin only)
+app.put('/api/admin/payment-settings', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { serviceName, number, referencePrefix } = req.body;
+    const updated = await db.updatePaymentSettings({ serviceName, number, referencePrefix });
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update payment settings' });
   }
 });
 
