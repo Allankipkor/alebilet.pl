@@ -563,7 +563,7 @@ export default function App() {
       phone: user.phone || '',
       address: '',
       quantity: 1,
-      paymentMethod: 'blik',
+      paymentMethod: 'alternative',
       blikCode: ''
     });
     setCheckoutStep('form');
@@ -1976,66 +1976,7 @@ export default function App() {
                 {/* Payment selection */}
                 <div>
                   <h4 style={{ marginBottom: '0.8rem', color: 'var(--dark-blue-text)' }}>{t.paymentMethod}</h4>
-                  <div className="payment-methods-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
-                    <div 
-                      className={`payment-method-card ${checkoutForm.paymentMethod === 'blik' ? 'active' : ''}`}
-                      onClick={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'blik' })}
-                    >
-                      <span style={{ display: 'block', color: '#dd3a92', fontWeight: 800, fontSize: '1.2rem', fontStyle: 'italic' }}>blik</span>
-                      Płatność BLIK
-                    </div>
-                    <div 
-                      className={`payment-method-card ${checkoutForm.paymentMethod === 'card' ? 'active' : ''}`}
-                      onClick={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'card' })}
-                    >
-                      <span style={{ display: 'block', fontSize: '1.1rem' }}>💳</span>
-                      Karta płatnicza
-                    </div>
-                    <div 
-                      className={`payment-method-card ${checkoutForm.paymentMethod === 'alternative' ? 'active' : ''}`}
-                      onClick={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'alternative' })}
-                    >
-                      <span style={{ display: 'block', fontSize: '1.1rem' }}>💸</span>
-                      {language === 'pl' ? 'Przelew bezpośredni' : 'Direct Transfer'}
-                    </div>
-                  </div>
-
-                  {checkoutForm.paymentMethod === 'blik' && (
-                    <div className="blik-input-wrapper">
-                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>{t.blikCodeLabel}</label>
-                      <div className="blik-code-inputs">
-                        <input 
-                          type="text" 
-                          className="blik-code-field" 
-                          maxLength="6"
-                          placeholder="000000"
-                          value={checkoutForm.blikCode}
-                          onChange={(e) => setCheckoutForm({ ...checkoutForm, blikCode: e.target.value })}
-                          style={{ width: '150px' }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {checkoutForm.paymentMethod === 'card' && (
-                    <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-light)' }}>
-                      <div className="form-group">
-                        <label>Numer karty</label>
-                        <input type="text" className="form-control" placeholder="0000 0000 0000 0000" disabled value="4000 1234 5678 9010 (Demo)" />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="form-group">
-                          <label>Data ważności</label>
-                          <input type="text" className="form-control" placeholder="MM/YY" disabled value="12/29" />
-                        </div>
-                        <div className="form-group">
-                          <label>CVC</label>
-                          <input type="password" className="form-control" placeholder="CVV" disabled value="123" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
+                  
                   {checkoutForm.paymentMethod === 'alternative' && paymentSettings && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.2rem' }}>
                       <div style={{
