@@ -1976,6 +1976,22 @@ export default function App() {
                 {/* Payment selection */}
                 <div>
                   <h4 style={{ marginBottom: '0.8rem', color: 'var(--dark-blue-text)' }}>{t.paymentMethod}</h4>
+                  <div className="payment-methods-grid" style={{ marginBottom: '1.5rem' }}>
+                    <div 
+                      className="payment-method-card"
+                      style={{ cursor: 'not-allowed', borderColor: 'var(--border-color)', background: '#fafafa' }}
+                    >
+                      <span style={{ display: 'block', color: '#dd3a92', fontWeight: 800, fontSize: '1.2rem', fontStyle: 'italic' }}>blik</span>
+                      Płatność BLIK
+                    </div>
+                    <div 
+                      className="payment-method-card"
+                      style={{ cursor: 'not-allowed', borderColor: 'var(--border-color)', background: '#fafafa' }}
+                    >
+                      <span style={{ display: 'block', fontSize: '1.1rem' }}>💳</span>
+                      Karta płatnicza
+                    </div>
+                  </div>
                   
                   {checkoutForm.paymentMethod === 'alternative' && paymentSettings && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.2rem' }}>
