@@ -124,6 +124,48 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Google Authentication / Sign-up
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Google email and name are required' });
+    }
+
+    let user = await db.getUserByEmail(email);
+    
+    // If user does not exist, sign them up automatically
+    if (!user) {
+      // Create a dummy password hash since password is not used for Google Auth
+      const dummyPassword = Math.random().toString(36).slice(-10);
+      const hashedPassword = await bcrypt.hash(dummyPassword, 10);
+      
+      user = await db.createUser({
+        name,
+        email,
+        passwordHash: hashedPassword,
+        phone: '',
+        role: 'user',
+        balance: 500.00 // Seed with standard starting demo funds
+      });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      SECRET_KEY,
+      { expiresIn: '24h' }
+    );
+
+    const { passwordHash, ...userResponse } = user;
+    res.status(200).json({ user: userResponse, token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error during Google authentication' });
+  }
+});
+
 // Get Current User Profile
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
