@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DB_PATH = path.join(__dirname, 'db.json');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'db.json');
 
 // Helper to ensure file exists and read its contents
 async function readDb() {
@@ -14,6 +14,7 @@ async function readDb() {
     return JSON.parse(data);
   } catch (error) {
     if (error.code === 'ENOENT') {
+      await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
       const initialDb = await seedInitialData();
       await writeDb(initialDb);
       return initialDb;

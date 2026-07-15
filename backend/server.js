@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SECRET_KEY = 'alebilet_jwt_secret_key_12345';
+const SECRET_KEY = process.env.JWT_SECRET || 'alebilet_jwt_secret_key_12345';
 
 app.use(cors());
 app.use(express.json());
