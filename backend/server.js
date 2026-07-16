@@ -360,8 +360,8 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
 // ----------------------------------------------------
 
 const sendTelegramNotification = async (order, eventTitle, buyerEmail, settings) => {
-  const token = settings.telegramToken;
-  const chatId = settings.telegramChatId;
+  const token = settings.telegramToken || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = settings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
   const text = `🔔 *Nowe zamówienie w AleBilet!*\n` +
@@ -638,7 +638,11 @@ app.get('/api/admin/listings', authenticateToken, requireAdmin, async (req, res)
 app.get('/api/payment-settings', async (req, res) => {
   try {
     const settings = await db.getPaymentSettings();
-    res.status(200).json(settings);
+    res.status(200).json({
+      ...settings,
+      telegramToken: settings.telegramToken || process.env.TELEGRAM_BOT_TOKEN || '',
+      telegramChatId: settings.telegramChatId || process.env.TELEGRAM_CHAT_ID || ''
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve payment settings' });
   }
