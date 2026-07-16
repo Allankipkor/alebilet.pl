@@ -284,20 +284,40 @@ app.get('/api/events/:eventId/listings', async (req, res) => {
 // Create Listing (Seller post)
 app.post('/api/listings', authenticateToken, async (req, res) => {
   try {
-    const { eventId, category, row, seat, quantity, pricePerTicket, ticketType, fileName } = req.body;
+    const { eventId, customEvent, category, row, seat, quantity, pricePerTicket, ticketType, fileName } = req.body;
 
-    if (!eventId || !category || !quantity || !pricePerTicket || !ticketType) {
+    let targetEventId = eventId;
+
+    if (!targetEventId && customEvent) {
+      if (!customEvent.title || !customEvent.city || !customEvent.venue || !customEvent.date) {
+        return res.status(400).json({ error: 'Missing custom event details' });
+      }
+
+      // Create new event dynamically
+      const createdEvent = await db.createEvent({
+        title: customEvent.title,
+        city: customEvent.city,
+        venue: customEvent.venue,
+        date: customEvent.date,
+        category: 'Concerts',
+        description: customEvent.description || '',
+        imageUrl: ''
+      });
+      targetEventId = createdEvent.id;
+    }
+
+    if (!targetEventId || !category || !quantity || !pricePerTicket || !ticketType) {
       return res.status(400).json({ error: 'Missing listing information' });
     }
 
     // Verify event exists
-    const event = await db.getEventById(eventId);
+    const event = await db.getEventById(targetEventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
 
     const newListing = await db.createListing({
-      eventId,
+      eventId: targetEventId,
       sellerId: req.user.id,
       category,
       row: row || 'GA',

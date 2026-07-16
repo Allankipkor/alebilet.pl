@@ -665,7 +665,10 @@ export default function App() {
     }
     setSellWizardStep(1);
     setSellForm({
-      eventId: '',
+      eventTitle: '',
+      eventCity: '',
+      eventVenue: '',
+      eventDate: '',
       category: 'Standing',
       row: '',
       seat: '',
@@ -681,7 +684,7 @@ export default function App() {
 
   const handleSellSubmit = async () => {
     setSellError('');
-    if (!sellForm.eventId || !sellForm.pricePerTicket) {
+    if (!sellForm.eventTitle || !sellForm.eventCity || !sellForm.eventVenue || !sellForm.eventDate || !sellForm.pricePerTicket) {
       setSellError(language === 'pl' ? 'Wypełnij wszystkie pola' : 'Please fill in all fields');
       return;
     }
@@ -693,7 +696,21 @@ export default function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(sellForm)
+        body: JSON.stringify({
+          customEvent: {
+            title: sellForm.eventTitle,
+            city: sellForm.eventCity,
+            venue: sellForm.eventVenue,
+            date: sellForm.eventDate
+          },
+          category: sellForm.category,
+          row: sellForm.row,
+          seat: sellForm.seat,
+          quantity: sellForm.quantity,
+          pricePerTicket: sellForm.pricePerTicket,
+          ticketType: sellForm.ticketType,
+          fileName: sellForm.fileName
+        })
       });
       if (res.ok) {
         const createdData = await res.json();
@@ -1045,24 +1062,50 @@ export default function App() {
               {/* Step 1: Select Event */}
               {sellWizardStep === 1 && (
                 <div>
-                  <h3 style={{ marginBottom: '1rem' }}>{t.selectEvent}</h3>
+                  <h3 style={{ marginBottom: '1.2rem' }}>{language === 'pl' ? 'Wprowadź dane wydarzenia' : 'Enter event details'}</h3>
                   <div className="form-group">
-                    <label>{t.eventTitle}</label>
-                    <select 
+                    <label>{language === 'pl' ? 'Nazwa wydarzenia' : 'Name of the event'}</label>
+                    <input 
+                      type="text"
                       className="form-control"
-                      value={sellForm.eventId}
-                      onChange={(e) => setSellForm({ ...sellForm, eventId: e.target.value })}
-                    >
-                      <option value="">-- Wybierz wydarzenie --</option>
-                      {events.map(ev => (
-                        <option key={ev.id} value={ev.id}>{ev.title} ({ev.city})</option>
-                      ))}
-                    </select>
+                      placeholder="np. Dawid Podsiadło - Stadium Tour"
+                      value={sellForm.eventTitle}
+                      onChange={(e) => setSellForm({ ...sellForm, eventTitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{language === 'pl' ? 'Miasto' : 'City'}</label>
+                    <input 
+                      type="text"
+                      className="form-control"
+                      placeholder="np. Warszawa"
+                      value={sellForm.eventCity}
+                      onChange={(e) => setSellForm({ ...sellForm, eventCity: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{language === 'pl' ? 'Miejsce wydarzenia' : 'Venue'}</label>
+                    <input 
+                      type="text"
+                      className="form-control"
+                      placeholder="np. PGE Narodowy"
+                      value={sellForm.eventVenue}
+                      onChange={(e) => setSellForm({ ...sellForm, eventVenue: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{language === 'pl' ? 'Data wydarzenia' : 'Event Date'}</label>
+                    <input 
+                      type="datetime-local"
+                      className="form-control"
+                      value={sellForm.eventDate}
+                      onChange={(e) => setSellForm({ ...sellForm, eventDate: e.target.value })}
+                    />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
                     <button 
                       className="btn btn-primary" 
-                      disabled={!sellForm.eventId}
+                      disabled={!sellForm.eventTitle || !sellForm.eventCity || !sellForm.eventVenue || !sellForm.eventDate}
                       onClick={() => setSellWizardStep(2)}
                     >
                       Dalej <ChevronRight size={16} />
